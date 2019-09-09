@@ -25,7 +25,11 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sauban.colorgridapp"
+    },
+    "android": {
+      "package": "com.sauban.colorgridapp"
     }
   }
 }
