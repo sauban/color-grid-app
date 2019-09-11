@@ -1,6 +1,46 @@
 import React from 'react';
 import { StyleSheet, View, TouchableHighlight, Text } from 'react-native';
 
+
+const Row = ({ rowIndex, rowObject, rowKey, colors, onPressFn }) => {
+    return (
+        <View testID={`row-${rowIndex}`} key={rowIndex} style={{ flexDirection: 'row' }}>
+            {
+                Object.keys(rowObject).sort().map((colkey: string) => {
+                    const cellColor = colors[rowObject[colkey]];
+                    return (
+                        <Box key={colkey} cellColor={cellColor} rowKey={rowKey} colKey={colkey} onPressFn={onPressFn} />
+                    )
+                })
+            }
+        </View>
+    )
+}
+
+const Box = ({ rowKey, colKey, cellColor, onPressFn }) => {
+    return (
+        <TouchableHighlight
+            key={colKey}
+            testID={`box-${colKey}`}
+            onPress={() => onPressFn(rowKey, colKey)}
+            style={{ ...styles.cell, backgroundColor: cellColor }}>
+            <Text testID={`box-text-${colKey}`} accessibilityLabel={cellColor} style={{ color: cellColor }}> {colKey} </Text>
+        </TouchableHighlight>
+    )
+}
+
+const populateGridData = (colors: Array<string>) => {
+    const rowObj = colors.reduce((rows, color: any, rowIndex: string | number) => {
+        rows[rowIndex] = colors.reduce((cols, currColor: any, colorIndex: any) => {
+            const colId = `${rowIndex}${colorIndex}`;
+            cols[colId] = colorIndex;
+            return cols;
+        }, {});
+        return rows;
+    }, {});
+    return rowObj;
+}
+
 export default class Grid extends React.Component {
     state = {
         colors: [
@@ -24,55 +64,22 @@ export default class Grid extends React.Component {
         this.setState({ gridData: copyGridData })
     }
 
-    populateGridData = (colors: Array<string>) => {
-        const rowObj = colors.reduce((rows, color: any, rowIndex: string | number) => {
-            rows[rowIndex] = colors.reduce((cols, currColor: any, colorIndex: any) => {
-                const colId = `${rowIndex}${colorIndex}`;
-                cols[colId] = colorIndex;
-                return cols;
-            }, {});
-            return rows;
-        }, {});
-        return rowObj;
-    }
-
     componentDidMount() {
         const { colors } = this.state;
-        this.setState({ gridData: this.populateGridData(colors) });
-    }
-    
-    makeRow = (rowKey: string, rowIndex: number) => {
-        const { gridData } = this.state;
-        const rowObject = gridData[rowKey];
-        return this.renderBoxList({ rowObject, rowKey, rowIndex });
-    }
-
-    renderBoxList = ({ rowObject, rowIndex, rowKey }) => {
-        return (<View testID={`row-${rowIndex}`} key={rowIndex} style={{ flexDirection: 'row' }}>
-            {Object.keys(rowObject).sort().map(this.makeBox({ rowKey, rowObject }))}
-        </View>)
-    }
-
-    makeBox = ({ rowKey, rowObject }) => (colKey: string) => {
-        const { colors } = this.state;
-        const cellColor = colors[rowObject[colKey]];
-        return (
-            <TouchableHighlight
-                key={colKey}
-                testID={`box-${colKey}`}
-                onPress={() => this.nextColor(rowKey, colKey)}
-                style={{ ...styles.cell, backgroundColor: cellColor }}>
-                <Text testID={`box-text-${colKey}`} accessibilityLabel={cellColor} style={{ color: cellColor }}> {colKey} </Text>
-            </TouchableHighlight>
-        )
+        this.setState({ gridData: populateGridData(colors) });
     }
 
     render() {
-        const { gridData } = this.state;
+        const { gridData, colors } = this.state;
         return (
             <View testID="GridComponent" style={styles.container}>
                 {/* Render the row List */}
-                {Object.keys(gridData).sort().map(this.makeRow)}
+                {Object.keys(gridData).sort().map((rowKey: string, rowIndex: number) => {
+                    const rowObject = gridData[rowKey];
+                    return (
+                        <Row key={rowIndex} rowIndex={rowIndex} rowObject={rowObject} rowKey={rowKey} colors={colors} onPressFn={this.nextColor} />
+                    )
+                })}
             </View>
         )
     }
